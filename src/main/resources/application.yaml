@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: product-sample-api
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+#    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update    # create | update | none
+    show-sql: true          # log generated SQL
+    properties:
+      hibernate:
+        format_sql: true
