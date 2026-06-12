@@ -17,6 +17,10 @@ public class Product {
     private String name;
     private String description;
     private Float price;
+
+    @Column(nullable = false)
+    private Boolean isDeleted = false;
+
     private Integer userId; // user that create the product !
     // private Integer categoryId;
     @ManyToOne(fetch = FetchType.LAZY)

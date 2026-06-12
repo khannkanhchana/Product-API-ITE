@@ -8,9 +8,17 @@ import java.util.List;
 
 public interface CategoryService {
     CategoryResponse createCategory(CategoryRequest request);
+
+    // get all with Pagination ( follow products sample )
     List<CategoryResponse> findAllCategory();
+
+
     CategoryResponse updateCategory(Integer id, UpdateCategoryRequest categoryRequest);
     CategoryResponse findCategoryById(Integer id);
+
+    // soft delete category ( changing the value of isDeleted )
     void deleteCategory(Integer id);
+
+
     List<CategoryResponse> findByName(String name);
 }

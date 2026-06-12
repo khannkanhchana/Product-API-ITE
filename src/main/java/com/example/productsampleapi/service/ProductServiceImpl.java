@@ -5,12 +5,15 @@ import com.example.productsampleapi.dto.ProductRequest;
 import com.example.productsampleapi.dto.ProductResponse;
 import com.example.productsampleapi.dto.UpdateProductRequest;
 import com.example.productsampleapi.entity.Product;
+import com.example.productsampleapi.mapper.ProductMapper;
 import com.example.productsampleapi.repository.ProductRepository;
-import com.example.productsampleapi.repository.ProductRepositoryOld;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+//import java.awt.print.Pageable;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -23,6 +26,7 @@ public class ProductServiceImpl implements ProductService{
 //    private Integer nextId = 1007;
 
     private final ProductRepository productRepository;
+    private final ProductMapper productMapper;
     //mapToEntity
     private Product mapToEntity(ProductRequest request) {
         Product product = new Product();
@@ -40,72 +44,94 @@ public class ProductServiceImpl implements ProductService{
                 product.getId(),
                 product.getName(),
                 product.getDescription(),
-                product.getPrice()
+                product.getPrice(),
+                product.getIsDeleted() // IMPORTANT FIX
         );
     }
 
     @Override
     public ProductResponse createProduct(ProductRequest request) {
-        //create entity product from the request
-        var product = mapToEntity(request);
-        //set static userID
+
+        Product product = productMapper.mapToProduct(request);
+
         product.setUserId(1);
-//        product.setId(nextId++);
-//        return mapToResponse(productRepositoryOld.createProduct(product));
-        // insert the data to the table only need to
-        // repository.save(entity) = insert
-        return mapToResponse(productRepository.save(product));
+        product.setIsDeleted(false);
+
+        return productMapper.mapToResponse(productRepository.save(product));
     }
 
+//    @Override
+//    public List<ProductResponse> findAllProducts() {
+//        return productRepository.findAll()
+//                .stream()
+//                .map(this::mapToResponse)
+//                .toList();
+//    }
+
+//    @Override
+//    public Page<ProductResponse> findAllProducts(Pageable pageable) {
+//        return productRepository.findByIsDeletedFalse(pageable)
+//                .map(productMapper::mapToResponse);
+//    }
+//@Override
+//public List<ProductResponse> findAllProducts() {
+//    // repository.findAll()
+//    return productRepository.findAll()
+//            .stream()
+//            .map(productMapper::mapToResponse)
+//            .toList();
+//}
+
+
     @Override
-    public List<ProductResponse> findAllProducts() {
-        return productRepository.findAll()
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
+    public Page<ProductResponse> findAllProducts(Pageable pageable) {
+        return productRepository.findByIsDeletedFalse(pageable)
+                .map(productMapper::mapToResponse);
     }
 
     @Override
     public ProductResponse findProductById(Integer id) {
-        var product = productRepository.findById(id)
-                .orElseThrow(()-> new NoSuchElementException("Product with ID = "+id+" not found"));
-        return mapToResponse(product);
+
+        Product product = productRepository.findById(id)
+                .orElseThrow(() ->
+                        new NoSuchElementException("Product with ID = " + id + " not found")
+                );
+
+        return productMapper.mapToResponse(product);
     }
 
     @Override
     public ProductResponse updateProduct(Integer id, UpdateProductRequest request) {
-        //find existing product
-//        var existingProduct = productRepository.findById(id);
-//        if(existingProduct == null) {
-//            log.info("Product with id {} not found", id);
-//            return null;
-//        }
-        var existingProduct = productRepository.findById(id).orElseThrow(()-> new NoSuchElementException("Product with ID = "+id+" not found"));
+
+        Product product = productRepository.findById(id)
+                .orElseThrow(() ->
+                        new NoSuchElementException("Product with ID = " + id + " not found")
+                );
+
         if (request.name() != null)
-            existingProduct.setName(request.name());
+            product.setName(request.name());
+
         if (request.description() != null)
-            existingProduct.setDescription(request.description());
+            product.setDescription(request.description());
+
         if (request.price() != null)
-            existingProduct.setPrice(request.price());
-        productRepository.save(existingProduct);
-        //Product product = mapToEntity(request);
-        return mapToResponse(existingProduct);
+            product.setPrice(request.price());
+
+        return productMapper.mapToResponse(productRepository.save(product));
     }
 
-    @Override
-    public boolean deleteProduct(int id) {
-        var product = productRepository.findById(id);
-//        if (product == null) {
-//            log.info("Product with id {} not found", id);
-//            return false;
-//        }
 
-//        productRepository.deleteById(id);
-//        return true;
-        if(productRepository.existsById(id)) {
-            productRepository.deleteById(id);
-            return true;
-        }
-        return false;
+    // soft delete the same category
+    @Override
+    public void deleteProduct(Integer id) {
+
+        Product product = productRepository.findById(id)
+                .orElseThrow(() ->
+                        new NoSuchElementException("Product with ID = " + id + " does not exist")
+                );
+
+        product.setIsDeleted(true);
+
+        productRepository.save(product);
     }
 }

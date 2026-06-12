@@ -2,6 +2,7 @@ package com.example.productsampleapi.restcontroller;
 
 import com.example.productsampleapi.dto.CategoryRequest;
 import com.example.productsampleapi.dto.CategoryResponse;
+import com.example.productsampleapi.dto.UpdateCategoryRequest;
 import com.example.productsampleapi.service.CategoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -63,5 +64,21 @@ public class CategoryRestController {
     public void deleteCategory(@PathVariable Integer id) {
         categoryService.deleteCategory(id);
 
+    }
+
+    @GetMapping("/{id}")
+    public CategoryResponse getById(@PathVariable Integer id) {
+        return categoryService.findCategoryById(id);
+    }
+
+    @PatchMapping("/{id}")
+    public CategoryResponse updateCategory(
+            @PathVariable Integer id,
+            @RequestBody UpdateCategoryRequest request) {
+        return categoryService.updateCategory(id, request);
+    }
+    @GetMapping("/search")
+    public List<CategoryResponse> findByName(@RequestParam String name) {
+        return categoryService.findByName(name);
     }
 }

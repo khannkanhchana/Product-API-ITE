@@ -23,22 +23,39 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryMapper categoryMapper;
     private final CategoryRepository categoryRepository;
 
-    @Override
-    public CategoryResponse createCategory(CategoryRequest request) {
+//    @Override
+//    public CategoryResponse createCategory(CategoryRequest request) {
+////        Category category = categoryMapper.toEntity(request);
+////        var newCategory = categoryRepository.save(category);
+////        return categoryMapper.toResponse(newCategory);
+////        return null;
 //        Category category = categoryMapper.toEntity(request);
+//
+//        if(categoryRepository.existsByName(request.name())){
+//            // throw exception handler
+////            throw new RuntimeException("category already exists");
+//            throw new ResourceAlreadyExistException("Category with name= " + request.name() + "Already exists");
+//        }
 //        var newCategory = categoryRepository.save(category);
 //        return categoryMapper.toResponse(newCategory);
-//        return null;
-        Category category = categoryMapper.toEntity(request);
+//    }
+@Override
+public CategoryResponse createCategory(CategoryRequest request) {
 
-        if(categoryRepository.existsByName(request.name())){
-            // throw exception handler
-//            throw new RuntimeException("category already exists");
-            throw new ResourceAlreadyExistException("Category with name= " + request.name() + "Already exists");
-        }
-        var newCategory = categoryRepository.save(category);
-        return categoryMapper.toResponse(newCategory);
+    Category category = categoryMapper.toEntity(request);
+
+    if (categoryRepository.existsByName(request.name())) {
+        throw new ResourceAlreadyExistException(
+                "Category with name= " + request.name() + " already exists"
+        );
     }
+
+    category.setIsDeleted(false);
+
+    var newCategory = categoryRepository.save(category);
+
+    return categoryMapper.toResponse(newCategory);
+}
 
     @Override
     public List<CategoryResponse> findAllCategory() {
@@ -50,30 +67,69 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public CategoryResponse updateCategory(Integer id, UpdateCategoryRequest categoryRequest) {
-        return null;
+    public CategoryResponse updateCategory(Integer id, UpdateCategoryRequest request) {
+
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Category with id = " + id + " not found"));
+
+        if (request.name() != null) {
+            category.setName(request.name());
+        }
+
+        if (request.description() != null) {
+            category.setDescription(request.description());
+        }
+
+
+        Category updated = categoryRepository.save(category);
+
+        return categoryMapper.toResponse(updated);
     }
 
     @Override
     public CategoryResponse findCategoryById(Integer id) {
-        return null;
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Category with id = " + id + " not found"));
+
+        return categoryMapper.toResponse(category);
     }
 
-    @Override
-    public void deleteCategory(Integer id) {
-        if (!categoryRepository.existsById(id)) {
-            throw new NoSuchElementException("Category with id = " + id + "does not exist");
-        }
-        categoryRepository.deleteById(id);
-//        if(categoryRepository.existsById(id)) {
-//            categoryRepository.deleteById(id);
-//            return true;
+
+    // do with sort delete
+//    @Override
+//    public void deleteCategory(Integer id) {
+//        Category category = new Category();
+//        if (!categoryRepository.existsById(id)) {
+//            throw new NoSuchElementException("Category with id = " + id + "does not exist");
 //        }
-//        return false;
-    }
+//        category.setIsDeleted(true);
+//        categoryRepository.save(category);
+////        categoryRepository.deleteById(id);
+////        if(categoryRepository.existsById(id)) {
+////            categoryRepository.deleteById(id);
+////            return true;
+////        }
+////        return false;
+//    }
+
+@Override
+public void deleteCategory(Integer id) {
+
+    Category category = categoryRepository.findById(id)
+            .orElseThrow(() ->
+                    new NoSuchElementException("Category with id = " + id + " does not exist")
+            );
+
+    category.setIsDeleted(true);
+
+    categoryRepository.save(category);
+}
 
     @Override
     public List<CategoryResponse> findByName(String name) {
-        return List.of();
+        return categoryRepository.findByNameContainingIgnoreCase(name)
+                .stream()
+                .map(categoryMapper::toResponse)
+                .toList();
     }
 }

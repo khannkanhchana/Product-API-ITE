@@ -13,12 +13,7 @@ import java.util.NoSuchElementException;
 public class ProductRepositoryOld {
     // because we don't work with database yet
     // productList = represent the data storage
-    private List<Product> productList = new ArrayList<>(){{
-        add(new Product(1001, "Coca", "Nice to See Yaa", 23.20f, null, null));
-        add(new Product(1002, "Ize", "Best ice cola", 23.12f,null,null));
-        add(new Product(1003, "Fanto", "Good tasty", 21.12f,null,null));
-        add(new Product(1004, "Pepci", "Best for vocation", 24.12f,null,null));
-    }};
+    private List<Product> productList = new ArrayList<>();
     public List<Product> getAllProduct() {
         return productList;
     }
