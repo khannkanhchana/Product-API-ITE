@@ -10,6 +10,10 @@ public record CategoryRequest(
         String name,
         @Size(min = 1, max = 100)
         @NotBlank(message = "description is required")
-        String description
+        String description,
+
+        // update fields
+        String icon,
+        Integer parentCategoryId
 ) {
 }

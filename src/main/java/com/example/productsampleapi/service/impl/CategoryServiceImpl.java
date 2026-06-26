@@ -1,4 +1,4 @@
-package com.example.productsampleapi.service;
+package com.example.productsampleapi.service.impl;
 
 import com.example.productsampleapi.advisor.ResourceAlreadyExistException;
 import com.example.productsampleapi.dto.CategoryRequest;
@@ -7,9 +7,11 @@ import com.example.productsampleapi.dto.UpdateCategoryRequest;
 import com.example.productsampleapi.entity.Category;
 import com.example.productsampleapi.mapper.CategoryMapper;
 import com.example.productsampleapi.repository.CategoryRepository;
+import com.example.productsampleapi.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -43,10 +45,23 @@ public class CategoryServiceImpl implements CategoryService {
 public CategoryResponse createCategory(CategoryRequest request) {
 
     Category category = categoryMapper.toEntity(request);
+    // if the parent_category_id provided , we validate it first
+//    Category parentCategory = null;
+    if (request.parentCategoryId()!=null){
+        // check if it exists
+        var  parentCategory = categoryRepository
+                .findById(request.parentCategoryId())
+                .orElseThrow(
+                        ()-> new NoSuchElementException("Parent category with id = "+request.parentCategoryId() + " doesn't exists ! ")
+                );
+        category.setParentCategory(parentCategory);
+
+    }
+    // derived query
 
     if (categoryRepository.existsByName(request.name())) {
         throw new ResourceAlreadyExistException(
-                "Category with name= " + request.name() + " already exists"
+                "Category with name = " + request.name() + " already exists"
         );
     }
 
@@ -128,6 +143,20 @@ public void deleteCategory(Integer id) {
     @Override
     public List<CategoryResponse> findByName(String name) {
         return categoryRepository.findByNameContainingIgnoreCase(name)
+                .stream()
+                .map(categoryMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public List<CategoryResponse> findParentCategories(String sortDirectory) {
+        // use "name" of the category to sort
+        Sort sort = Sort.by(Sort.Direction.ASC, "name");
+        if("desc".equalsIgnoreCase(sortDirectory)){
+            sort = sort.descending();
+        }else sort = sort.ascending();
+
+        return categoryRepository.findByParentCategoryIsNull(sort)
                 .stream()
                 .map(categoryMapper::toResponse)
                 .toList();

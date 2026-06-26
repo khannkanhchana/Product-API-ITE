@@ -49,6 +49,9 @@ public class CategoryRestController {
     // New One
     private final CategoryService categoryService;
 
+
+
+
     @GetMapping
     List<CategoryResponse> getCategories() {
         return categoryService.findAllCategory();
@@ -76,6 +79,11 @@ public class CategoryRestController {
             @PathVariable Integer id,
             @RequestBody UpdateCategoryRequest request) {
         return categoryService.updateCategory(id, request);
+    }
+
+    @GetMapping("/parents")
+    List<CategoryResponse> getParentCategories(@RequestParam("sort") String sortDirection) {
+        return categoryService.findParentCategories(sortDirection);
     }
     @GetMapping("/search")
     public List<CategoryResponse> findByName(@RequestParam String name) {
